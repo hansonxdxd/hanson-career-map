@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { ExternalLink, Image as ImageIcon, ArrowRight } from 'lucide-react';
 
 const ProjectCard = ({ project, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -16,11 +16,11 @@ const ProjectCard = ({ project, index }) => {
       onHoverStart={() => setIsExpanded(true)}
       onHoverEnd={() => setIsExpanded(false)}
     >
-      <div className="relative h-full p-6 rounded-2xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm border border-blue-500/20 group-hover:border-cyan-400/50 transition-all duration-500 overflow-hidden">
+      <div className="relative h-full p-6 rounded-2xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm border border-blue-500/20 group-hover:border-cyan-400/50 transition-all duration-500 overflow-hidden flex flex-col">
         {/* 背景發光效果 */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/10 group-hover:to-cyan-500/10 transition-all duration-500" />
         
-        <div className="relative z-10">
+        <div className="relative z-10 flex-1 flex flex-col">
           {/* 專案圖片預留位置 */}
           {project.image ? (
             <div className="w-full h-48 mb-4 rounded-xl overflow-hidden">
@@ -38,7 +38,7 @@ const ProjectCard = ({ project, index }) => {
           </h3>
           
           {/* 描述 */}
-          <p className="text-slate-300 mb-4 leading-relaxed">
+          <p className="text-slate-300 mb-4 leading-relaxed flex-1">
             {project.description}
           </p>
           
@@ -60,10 +60,10 @@ const ProjectCard = ({ project, index }) => {
               href={project.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors duration-300"
+              className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors duration-300 group/link"
             >
-              <span className="text-sm font-medium">View Project</span>
-              <ExternalLink className="w-4 h-4" />
+              <span className="text-sm font-medium">查看專案</span>
+              <ExternalLink className="w-4 h-4 group-hover/link:translate-x-1 transition-transform duration-300" />
             </a>
           )}
         </div>
@@ -117,6 +117,26 @@ const ProjectsSection = ({ data }) => {
             <ProjectCard key={project.id} project={project} index={index} />
           ))}
         </div>
+
+        {/* 查看所有專案連結 */}
+        {data.viewAllUrl && (
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <a
+              href={data.viewAllUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/50 group"
+            >
+              <span>查看所有專案</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+            </a>
+          </motion.div>
+        )}
       </div>
     </section>
   );

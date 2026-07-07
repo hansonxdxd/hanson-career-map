@@ -17,24 +17,28 @@ export const siteContent = {
   coreThesis: {
     title: 'Core Thesis',
     subtitle: '核心主張',
+    learnMoreUrl: null,
     items: [
       {
         id: 1,
         title: 'Structure Chaos',
         description: '把龐雜資訊、混亂流程與零散經驗,整理成清楚架構。',
-        icon: 'layout-grid'
+        icon: 'layout-grid',
+        detailUrl: null
       },
       {
         id: 2,
         title: 'Build Systems',
         description: '設計可複製、可維護、可擴張的流程、模板、知識庫與自動化管線。',
-        icon: 'settings'
+        icon: 'settings',
+        detailUrl: null
       },
       {
         id: 3,
         title: 'Translate Across Domains',
         description: '能在醫療、影像、業務、行銷、AI 工具與企業流程之間轉譯需求。',
-        icon: 'shuffle'
+        icon: 'shuffle',
+        detailUrl: null
       }
     ]
   },
@@ -53,7 +57,8 @@ export const siteContent = {
         actions: '主動設計遊戲規則、創造玩法系統、嘗試發明原型,並將複雜知識重新整理成視覺化結構。',
         outcome: '建立了早期的痛點洞察、MVP 原型、知識結構化與視覺化能力。',
         coreAbility: '看見混亂中的結構,將零散資訊轉化為可理解的系統。',
-        tags: ['Systems Thinking', 'MVP', 'Knowledge Mapping', 'Visual Structure']
+        tags: ['Systems Thinking', 'MVP', 'Knowledge Mapping', 'Visual Structure'],
+        detailUrl: null
       },
       {
         id: 2,
@@ -65,7 +70,8 @@ export const siteContent = {
         actions: '結合魔術、手作、影像、企劃、談判與跨領域學習,用低成本方法替代昂貴技術解法。',
         outcome: '完成大型舞台演出、影像專案與競賽作品,累積跨域統籌、資源調度與創意解法能力。',
         coreAbility: '在資源有限的情況下,快速拼出可落地的 MVP 解法。',
-        tags: ['Resource Integration', 'Creative Production', 'Low-cost MVP', 'Storytelling']
+        tags: ['Resource Integration', 'Creative Production', 'Low-cost MVP', 'Storytelling'],
+        detailUrl: null
       },
       {
         id: 3,
@@ -77,7 +83,8 @@ export const siteContent = {
         actions: '重構表格與 SOP,建立防呆流程;將內容製作拆解成模板化管線,降低重複工作成本。',
         outcome: '形成業務流程重構、內容流水線、自動化思維與轉換漏斗觀念。',
         coreAbility: '把勞力密集工作拆解為可複製的流程與模板。',
-        tags: ['Workflow Design', 'SOP', 'Content Pipeline', 'Automation Thinking']
+        tags: ['Workflow Design', 'SOP', 'Content Pipeline', 'Automation Thinking'],
+        detailUrl: null
       },
       {
         id: 4,
@@ -89,7 +96,8 @@ export const siteContent = {
         actions: '萃取重點、重組敘事、視覺化複雜流程,將長時間內容濃縮成可學習、可溝通、可交付的成果。',
         outcome: '將長篇內容濃縮為精簡課程與高密度素材,建立資訊降維、視覺轉譯與商業理解能力。',
         coreAbility: '把高噪音資訊壓縮成清楚、可傳遞、可決策的內容系統。',
-        tags: ['Information Compression', 'Visual UX', 'Business Translation', 'Content Systems']
+        tags: ['Information Compression', 'Visual UX', 'Business Translation', 'Content Systems'],
+        detailUrl: null
       },
       {
         id: 5,
@@ -101,7 +109,8 @@ export const siteContent = {
         actions: '使用 AI 工具、Notion、Ragic、n8n、知識庫與自動化方法,協助文獻整理、競品分析、行銷素材、專案管理與流程重構。',
         outcome: '建立可用於醫療器材推廣、內部管理、專案追蹤與決策輔助的數位系統與工作流。',
         coreAbility: '將 AI、商業需求、醫療知識與企業流程整合成可運作的系統。',
-        tags: ['AI Workflow', 'Medical Device', 'Knowledge Base', 'Ragic', 'Notion', 'n8n', 'Business Systems']
+        tags: ['AI Workflow', 'Medical Device', 'Knowledge Base', 'Ragic', 'Notion', 'n8n', 'Business Systems'],
+        detailUrl: null
       }
     ]
   },
@@ -109,6 +118,7 @@ export const siteContent = {
   projects: {
     title: 'Selected Projects',
     subtitle: '精選專案',
+    viewAllUrl: null,
     items: [
       {
         id: 1,
@@ -156,6 +166,7 @@ export const siteContent = {
   capabilities: {
     title: 'Capability System',
     subtitle: '能力系統',
+    viewDetailUrl: null,
     categories: [
       {
         id: 1,

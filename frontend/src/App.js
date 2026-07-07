@@ -1,25 +1,24 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
-import { siteContent } from './data/mockData';
-import HeroSection from './components/HeroSection';
-import CoreThesis from './components/CoreThesis';
-import CareerEvolution from './components/CareerEvolution';
-import ProjectsSection from './components/ProjectsSection';
-import CapabilitiesSection from './components/CapabilitiesSection';
-import NowNextSection from './components/NowNextSection';
-import ContactSection from './components/ContactSection';
+import { AuthProvider } from './context/AuthContext';
+import { Toaster } from './components/ui/sonner';
+import LandingPage from './pages/LandingPage';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
-    <div className="App bg-slate-950">
-      <HeroSection data={siteContent.hero} />
-      <CoreThesis data={siteContent.coreThesis} />
-      <CareerEvolution data={siteContent.careerEvolution} />
-      <ProjectsSection data={siteContent.projects} />
-      <CapabilitiesSection data={siteContent.capabilities} />
-      <NowNextSection data={siteContent.nowNext} />
-      <ContactSection data={siteContent.contact} />
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+        </Routes>
+      </BrowserRouter>
+      <Toaster position="top-right" theme="dark" richColors />
+    </AuthProvider>
   );
 }
 

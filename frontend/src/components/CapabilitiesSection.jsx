@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { ExternalLink } from 'lucide-react';
 
 const CapabilityCategory = ({ category, index }) => {
   return (
@@ -66,6 +67,26 @@ const CapabilitiesSection = ({ data }) => {
             <CapabilityCategory key={category.id} category={category} index={index} />
           ))}
         </div>
+
+        {/* 查看詳細資訊連結 */}
+        {data.viewDetailUrl && (
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <a
+              href={data.viewDetailUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/50 group"
+            >
+              <span>查看完整技能樹</span>
+              <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+            </a>
+          </motion.div>
+        )}
       </div>
     </section>
   );

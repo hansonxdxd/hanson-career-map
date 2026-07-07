@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { ExternalLink } from 'lucide-react';
 
 const StageCard = ({ stage, index }) => {
   const [ref, inView] = useInView({
@@ -71,7 +72,7 @@ const StageCard = ({ stage, index }) => {
             </div>
             
             {/* 標籤 */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-6">
               {stage.tags.map((tag, i) => (
                 <span
                   key={i}
@@ -81,6 +82,19 @@ const StageCard = ({ stage, index }) => {
                 </span>
               ))}
             </div>
+
+            {/* 了解更多按鈕 */}
+            {stage.detailUrl && (
+              <a
+                href={stage.detailUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/50 group"
+              >
+                <span>了解更多</span>
+                <ExternalLink className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+              </a>
+            )}
           </div>
         </div>
       </motion.div>
