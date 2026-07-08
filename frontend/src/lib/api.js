@@ -7,7 +7,6 @@ const api = axios.create({
   baseURL: API,
 });
 
-// Attach token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('cms_token');
   if (token) {
@@ -28,18 +27,27 @@ export function formatApiErrorDetail(detail) {
   return String(detail);
 }
 
-// Public
+// Public content
 export const getContent = () => api.get('/content').then((r) => r.data);
+export const getProfileBySlug = (slug) => api.get(`/profiles/${slug}`).then((r) => r.data);
 
 // Auth
 export const login = (email, password) =>
   api.post('/auth/login', { email, password }).then((r) => r.data);
 export const getMe = () => api.get('/auth/me').then((r) => r.data);
 
-// Protected content
-export const updateContent = (content) =>
-  api.put('/content', { content }).then((r) => r.data);
+// Profile management (protected)
+export const listProfiles = () => api.get('/profiles').then((r) => r.data);
+export const adminGetProfile = (slug) => api.get(`/admin/profiles/${slug}`).then((r) => r.data);
+export const createProfile = (payload) => api.post('/profiles', payload).then((r) => r.data);
+export const updateProfileContent = (slug, content) =>
+  api.put(`/profiles/${slug}`, { content }).then((r) => r.data);
+export const updateProfileMeta = (slug, meta) =>
+  api.patch(`/profiles/${slug}`, meta).then((r) => r.data);
+export const deleteProfile = (slug) => api.delete(`/profiles/${slug}`).then((r) => r.data);
+export const resetProfile = (slug) => api.post(`/profiles/${slug}/reset`).then((r) => r.data);
 
+// Upload
 export const uploadImage = (file) => {
   const formData = new FormData();
   formData.append('file', file);

@@ -136,9 +136,9 @@ const CareerEvolution = ({ data }) => {
           {/* 中央時間線 */}
           <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 via-cyan-500 to-blue-500" />
           
-          {/* 階段卡片 */}
+          {/* 階段卡片 - 只顯示 visible 的階段 */}
           <div className="space-y-32">
-            {data.stages.map((stage, index) => (
+            {data.stages.filter((s) => s.visible !== false).map((stage, index) => (
               <StageCard key={stage.id} stage={stage} index={index} />
             ))}
           </div>

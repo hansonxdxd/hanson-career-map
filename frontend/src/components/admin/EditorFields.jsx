@@ -75,3 +75,26 @@ export const EditorCard = ({ title, children, badge }) => (
     {children}
   </div>
 );
+
+// Visibility toggle switch
+export const VisibilityToggle = ({ label = '在此設定檔顯示此區塊', value, onChange, testId }) => (
+  <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-blue-500/20">
+    <span className="text-sm text-slate-300">{label}</span>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={value !== false}
+      onClick={() => onChange(value === false)}
+      data-testid={testId}
+      className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
+        value !== false ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-slate-600'
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-300 ${
+          value !== false ? 'translate-x-6' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  </div>
+);

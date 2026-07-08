@@ -1,13 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { Mail, MapPin, Briefcase } from 'lucide-react';
+import { Mail, MapPin, Briefcase, Phone, MessageCircle, Download } from 'lucide-react';
 
 const ContactSection = ({ data }) => {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.2
   });
+
+  const resume = data.resume || {};
 
   return (
     <section id="contact" ref={ref} className="py-32 bg-gradient-to-b from-slate-900 via-blue-950 to-slate-950 relative overflow-hidden">
@@ -30,30 +32,77 @@ const ContactSection = ({ data }) => {
           {/* 聯絡資訊卡片 */}
           <div className="p-10 md:p-12 rounded-3xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl border border-blue-500/30 shadow-2xl">
             <div className="space-y-8">
-              {/* Email */}
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-6 h-6 text-cyan-400" />
+              {/* Email & Phone 兩欄 */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Email */}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-6 h-6 text-cyan-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-slate-400 text-sm mb-1">Email</p>
+                    <a
+                      href={`mailto:${data.email}`}
+                      data-testid="contact-email-link"
+                      className="text-lg md:text-xl text-white hover:text-cyan-400 transition-colors duration-300 break-all"
+                    >
+                      {data.email}
+                    </a>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-slate-400 text-sm mb-1">Email</p>
-                  <a
-                    href={`mailto:${data.email}`}
-                    className="text-xl md:text-2xl text-white hover:text-cyan-400 transition-colors duration-300"
-                  >
-                    {data.email}
-                  </a>
-                </div>
+
+                {/* Phone */}
+                {data.phone && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-6 h-6 text-cyan-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-slate-400 text-sm mb-1">Phone</p>
+                      <a
+                        href={`tel:${data.phone.replace(/\s/g, '')}`}
+                        data-testid="contact-phone-link"
+                        className="text-lg md:text-xl text-white hover:text-cyan-400 transition-colors duration-300"
+                      >
+                        {data.phone}
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Location */}
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-6 h-6 text-cyan-400" />
-                </div>
-                <div>
-                  <p className="text-slate-400 text-sm mb-1">Location</p>
-                  <p className="text-xl md:text-2xl text-white">{data.location}</p>
+              {/* LINE & Location 兩欄 */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* LINE */}
+                {data.lineUrl && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <MessageCircle className="w-6 h-6 text-green-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-slate-400 text-sm mb-1">LINE</p>
+                      <a
+                        href={data.lineUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid="contact-line-link"
+                        className="text-lg md:text-xl text-white hover:text-green-400 transition-colors duration-300 break-all"
+                      >
+                        加入 LINE
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Location */}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-6 h-6 text-cyan-400" />
+                  </div>
+                  <div>
+                    <p className="text-slate-400 text-sm mb-1">Location</p>
+                    <p className="text-lg md:text-xl text-white">{data.location}</p>
+                  </div>
                 </div>
               </div>
 
@@ -77,6 +126,22 @@ const ContactSection = ({ data }) => {
                   </div>
                 </div>
               </div>
+
+              {/* 履歷下載按鈕 */}
+              {resume.url && (
+                <div className="pt-4 border-t border-blue-500/20">
+                  <a
+                    href={resume.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="resume-download-button"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-cyan-400/40 hover:border-cyan-400/70 text-cyan-300 hover:text-white font-medium transition-all duration-300 group"
+                  >
+                    <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform duration-300" />
+                    <span>{resume.text || '下載傳統履歷 Resume'}</span>
+                  </a>
+                </div>
+              )}
             </div>
           </div>
 

@@ -1,13 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { LayoutGrid, Settings, Shuffle, ExternalLink, ArrowRight } from 'lucide-react';
-
-const iconMap = {
-  'layout-grid': LayoutGrid,
-  'settings': Settings,
-  'shuffle': Shuffle
-};
+import { ExternalLink, ArrowRight } from 'lucide-react';
+import { getIcon } from '../lib/icons';
 
 const CoreThesis = ({ data }) => {
   const [ref, inView] = useInView({
@@ -40,7 +35,8 @@ const CoreThesis = ({ data }) => {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {data.items.map((item, index) => {
-            const Icon = iconMap[item.icon];
+            const Icon = getIcon(item.icon);
+            const isCustom = item.iconType === 'custom' && item.icon;
             return (
               <motion.div
                 key={item.id}
@@ -54,8 +50,12 @@ const CoreThesis = ({ data }) => {
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/5 group-hover:to-cyan-500/5 transition-all duration-500" />
                   
                   <div className="relative z-10 flex-1 flex flex-col">
-                    <div className="w-16 h-16 mb-6 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-all duration-300">
-                      <Icon className="w-8 h-8 text-cyan-400" />
+                    <div className="w-16 h-16 mb-6 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-all duration-300 overflow-hidden">
+                      {isCustom ? (
+                        <img src={item.icon} alt={item.title} className="w-8 h-8 object-contain" />
+                      ) : (
+                        <Icon className="w-8 h-8 text-cyan-400" />
+                      )}
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-cyan-300 transition-colors duration-300">
                       {item.title}

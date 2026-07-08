@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
+import { ImageFrame } from './admin/ImageFramePicker';
 
 const HeroSection = ({ data }) => {
   const scrollToSection = (href) => {
@@ -27,6 +28,26 @@ const HeroSection = ({ data }) => {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl" />
 
       <div className="relative z-10 container mx-auto px-6 text-center">
+        {/* 大頭照 / 主視覺圖片 */}
+        {data.image && (
+          <motion.div
+            className="mb-8 flex justify-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="relative">
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 blur-md opacity-60" />
+              <ImageFrame
+                src={data.image}
+                alt={data.imageAlt || data.name}
+                position={data.imagePosition}
+                className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-2 border-cyan-400/50"
+              />
+            </div>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -71,6 +92,7 @@ const HeroSection = ({ data }) => {
             <Button
               key={index}
               onClick={() => scrollToSection(cta.href)}
+              data-testid={`hero-cta-${index}`}
               className="px-8 py-6 text-base bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border-0 shadow-lg hover:shadow-cyan-500/50 transition-all duration-300"
             >
               {cta.text}

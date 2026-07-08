@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { ExternalLink, Image as ImageIcon, ArrowRight } from 'lucide-react';
+import { ExternalLink, ArrowRight } from 'lucide-react';
+import { ImageFrame } from './admin/ImageFramePicker';
 
 const ProjectCard = ({ project, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -21,15 +22,14 @@ const ProjectCard = ({ project, index }) => {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/10 group-hover:to-cyan-500/10 transition-all duration-500" />
         
         <div className="relative z-10 flex-1 flex flex-col">
-          {/* 專案圖片預留位置 */}
-          {project.image ? (
-            <div className="w-full h-48 mb-4 rounded-xl overflow-hidden">
-              <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
-            </div>
-          ) : (
-            <div className="w-full h-48 mb-4 rounded-xl bg-gradient-to-br from-blue-900/30 to-cyan-900/30 flex items-center justify-center border border-blue-500/20">
-              <ImageIcon className="w-12 h-12 text-blue-400/40" />
-            </div>
+          {/* 專案圖片 - 只有在有圖片時才顯示 */}
+          {project.image && (
+            <ImageFrame
+              src={project.image}
+              alt={project.imageAlt || project.title}
+              position={project.imagePosition}
+              className="w-full h-48 mb-4 rounded-xl border border-blue-500/20"
+            />
           )}
           
           {/* 標題 */}

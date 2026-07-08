@@ -1,5 +1,8 @@
-import React from 'react';
-import { useSiteContent } from '../hooks/useSiteContent';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { getContent, getProfileBySlug } from '../lib/api';
+import { siteContent as fallbackContent } from '../data/mockData';
+import ScrollProgress from '../components/ScrollProgress';
 import HeroSection from '../components/HeroSection';
 import CoreThesis from '../components/CoreThesis';
 import CareerEvolution from '../components/CareerEvolution';
@@ -17,20 +20,64 @@ const LoadingScreen = () => (
   </div>
 );
 
-const LandingPage = () => {
-  const { content, loading } = useSiteContent();
+const NotFound = () => (
+  <div className="min-h-screen bg-slate-950 flex items-center justify-center px-6" data-testid="profile-not-found">
+    <div className="text-center">
+      <h1 className="text-4xl font-bold text-white mb-4">404</h1>
+      <p className="text-slate-400">找不到此設定檔頁面</p>
+    </div>
+  </div>
+);
 
-  if (loading || !content) return <LoadingScreen />;
+const isVisible = (section) => section && section.visible !== false;
+
+const LandingPage = () => {
+  const { slug } = useParams();
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setNotFound(false);
+    const loader = slug
+      ? getProfileBySlug(slug).then((d) => d.content)
+      : getContent();
+    loader
+      .then((data) => {
+        if (mounted) setContent(data);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        if (slug && err.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          setContent(fallbackContent);
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
+
+  if (loading) return <LoadingScreen />;
+  if (notFound) return <NotFound />;
+  if (!content) return <LoadingScreen />;
 
   return (
     <div className="App bg-slate-950" data-testid="landing-page">
-      <HeroSection data={content.hero} />
-      <CoreThesis data={content.coreThesis} />
-      <CareerEvolution data={content.careerEvolution} />
-      <ProjectsSection data={content.projects} />
-      <CapabilitiesSection data={content.capabilities} />
-      <NowNextSection data={content.nowNext} />
-      <ContactSection data={content.contact} />
+      <ScrollProgress />
+      {isVisible(content.hero) && <HeroSection data={content.hero} />}
+      {isVisible(content.coreThesis) && <CoreThesis data={content.coreThesis} />}
+      {isVisible(content.careerEvolution) && <CareerEvolution data={content.careerEvolution} />}
+      {isVisible(content.projects) && <ProjectsSection data={content.projects} />}
+      {isVisible(content.capabilities) && <CapabilitiesSection data={content.capabilities} />}
+      {isVisible(content.nowNext) && <NowNextSection data={content.nowNext} />}
+      {isVisible(content.contact) && <ContactSection data={content.contact} />}
     </div>
   );
 };
