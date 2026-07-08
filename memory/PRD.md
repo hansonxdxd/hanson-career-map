@@ -50,6 +50,18 @@
 - P2: Content schema validation on PUT
 - P2: Drag-to-reorder stages/projects in CMS
 
+## Update 3 (2025) — Project Database核心化 + 三面架構重構
+- [x] 三面架構:Home (`/`)、Archive (`/archive`)、Admin (`/admin`)
+- [x] Project Database 成為唯一資料來源;職涯地圖、精選專案、能力系統皆「引用」它
+- [x] 設定檔各自完全獨立(含各自 projectDatabase),互不同步
+- [x] 前台導覽重構:頂部 nav + 右側 section 圓點導覽(active 發光) + Hero scroll indicator(移除主要 CTA)
+- [x] Hero 圖片:layout(左/右/中)+shape(卡片/圓角方/圓形)+顯示開關 + Canva 式裁切
+- [x] Archive:橫向可展開專案卡片、每段內容可個別開關、?stage/?project 亮起
+- [x] 職涯階段選取關聯專案 → 自動帶入短標題 chips + 去重能力標籤
+- [x] 精選專案改為 slot 選取資料庫專案 + 可選覆寫;能力系統可從標籤池加入
+- [x] Admin 分兩大群組;專案 CRUD(新增/排序/隱藏/刪除/複製/成果連結)+ 回到前台/未儲存提醒/helper text/刪除二次確認
+- [x] 刪除專案自動清除孤兒引用;測試:後端 34/34、前端核心流程 PASS
+
 ## Update 2 (2025) — Profile Versions + Advanced CMS
 - [x] Profile/version system: multiple content profiles, each with independent public URL (`/` for default, `/p/:slug` for others). Create / rename / delete / set-default / switch in admin.
 - [x] Per-profile section visibility toggles + per-stage show/hide

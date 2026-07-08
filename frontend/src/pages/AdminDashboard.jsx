@@ -70,7 +70,6 @@ const AdminDashboard = () => {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checking, user]);
 
   const loadProfile = async (slug) => {
@@ -215,7 +214,26 @@ const AdminDashboard = () => {
 
   const renderEditor = () => {
     if (activeTab === 'projectDatabase') {
-      return <ProjectDatabaseEditor data={content.projectDatabase || []} update={(val) => updateSection('projectDatabase', val)} />;
+      const updateDb = (val) => {
+        const ids = new Set(val.map((p) => p.id));
+        setContent((prev) => ({
+          ...prev,
+          projectDatabase: val,
+          careerEvolution: {
+            ...prev.careerEvolution,
+            stages: (prev.careerEvolution?.stages || []).map((s) => ({
+              ...s,
+              relatedProjectIds: (s.relatedProjectIds || []).filter((id) => ids.has(id)),
+            })),
+          },
+          projects: {
+            ...prev.projects,
+            items: (prev.projects?.items || []).filter((it) => ids.has(it.projectId)),
+          },
+        }));
+        setDirty(true);
+      };
+      return <ProjectDatabaseEditor data={content.projectDatabase || []} update={updateDb} />;
     }
     const props = { data: content[activeTab], update: (val) => updateSection(activeTab, val), content };
     switch (activeTab) {
@@ -230,8 +248,9 @@ const AdminDashboard = () => {
     }
   };
 
-  const TabButton = ({ tab }) => (
+  const renderTab = (tab) => (
     <button
+      key={tab.key}
       onClick={() => setActiveTab(tab.key)}
       data-testid={`tab-${tab.key}`}
       className={`px-4 py-3 rounded-xl text-left whitespace-nowrap transition-all duration-300 font-medium text-sm ${
@@ -324,13 +343,13 @@ const AdminDashboard = () => {
             <div>
               <p className="text-[11px] uppercase tracking-widest text-slate-500 mb-2 px-1">A. 對外介面管理</p>
               <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-                {EXTERNAL_TABS.map((tab) => <TabButton key={tab.key} tab={tab} />)}
+                {EXTERNAL_TABS.map((tab) => renderTab(tab))}
               </nav>
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-widest text-slate-500 mb-2 px-1">B. 專案資料庫管理</p>
               <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-                {DB_TABS.map((tab) => <TabButton key={tab.key} tab={tab} />)}
+                {DB_TABS.map((tab) => renderTab(tab))}
               </nav>
             </div>
           </div>
