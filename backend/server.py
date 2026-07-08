@@ -392,12 +392,12 @@ async def update_profile_meta(slug: str, payload: ProfileMetaUpdate, current_use
 
 @api_router.delete("/profiles/{slug}")
 async def delete_profile(slug: str, current_user: dict = Depends(get_current_user)):
-    count = await db.profiles.count_documents({})
-    if count <= 1:
-        raise HTTPException(status_code=400, detail="至少需保留一個設定檔")
     prof = await db.profiles.find_one({"slug": slug})
     if not prof:
         raise HTTPException(status_code=404, detail="找不到此設定檔")
+    count = await db.profiles.count_documents({})
+    if count <= 1:
+        raise HTTPException(status_code=400, detail="至少需保留一個設定檔")
     was_default = prof.get("is_default", False)
     await db.profiles.delete_one({"slug": slug})
     if was_default:

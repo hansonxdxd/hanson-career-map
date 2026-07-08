@@ -49,3 +49,16 @@
 - P2: File/GridFS storage instead of base64 for images (production scale)
 - P2: Content schema validation on PUT
 - P2: Drag-to-reorder stages/projects in CMS
+
+## Update 2 (2025) — Profile Versions + Advanced CMS
+- [x] Profile/version system: multiple content profiles, each with independent public URL (`/` for default, `/p/:slug` for others). Create / rename / delete / set-default / switch in admin.
+- [x] Per-profile section visibility toggles + per-stage show/hide
+- [x] Import / Export JSON, Reset demo content, Download backup in admin
+- [x] Hero image upload with Canva-style drag-to-reposition crop + alt text
+- [x] Core Thesis icons: built-in icon picker (28 icons) + custom icon upload
+- [x] Career stages reorder (up/down) + individual visibility
+- [x] Projects: no empty frame when no image, alt text, drag crop, reorder
+- [x] Contact: phone + LINE fields (icons) + editable resume download button (text+link)
+- [x] Right-side + top scroll progress bar
+- [x] Tested: backend 27/27 pytest, frontend all critical flows PASS
+- Data model migrated from single `site_content` doc to `db.profiles` collection (auto-migrated on startup)
