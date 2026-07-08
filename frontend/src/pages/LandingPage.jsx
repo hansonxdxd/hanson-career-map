@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getContent, getProfileBySlug } from '../lib/api';
 import { siteContent as fallbackContent } from '../data/mockData';
-import ScrollProgress from '../components/ScrollProgress';
+import { TopNav, SectionDots } from '../components/SiteNav';
 import HeroSection from '../components/HeroSection';
 import CoreThesis from '../components/CoreThesis';
 import CareerEvolution from '../components/CareerEvolution';
@@ -41,27 +41,16 @@ const LandingPage = () => {
     let mounted = true;
     setLoading(true);
     setNotFound(false);
-    const loader = slug
-      ? getProfileBySlug(slug).then((d) => d.content)
-      : getContent();
+    const loader = slug ? getProfileBySlug(slug).then((d) => d.content) : getContent();
     loader
-      .then((data) => {
-        if (mounted) setContent(data);
-      })
+      .then((data) => { if (mounted) setContent(data); })
       .catch((err) => {
         if (!mounted) return;
-        if (slug && err.response?.status === 404) {
-          setNotFound(true);
-        } else {
-          setContent(fallbackContent);
-        }
+        if (slug && err.response?.status === 404) setNotFound(true);
+        else setContent(fallbackContent);
       })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
+      .finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
   }, [slug]);
 
   if (loading) return <LoadingScreen />;
@@ -70,11 +59,12 @@ const LandingPage = () => {
 
   return (
     <div className="App bg-slate-950" data-testid="landing-page">
-      <ScrollProgress />
+      <TopNav name={content.hero?.name} />
+      <SectionDots />
       {isVisible(content.hero) && <HeroSection data={content.hero} />}
       {isVisible(content.coreThesis) && <CoreThesis data={content.coreThesis} />}
-      {isVisible(content.careerEvolution) && <CareerEvolution data={content.careerEvolution} />}
-      {isVisible(content.projects) && <ProjectsSection data={content.projects} />}
+      {isVisible(content.careerEvolution) && <CareerEvolution data={content.careerEvolution} content={content} slug={slug} />}
+      {isVisible(content.projects) && <ProjectsSection data={content.projects} content={content} slug={slug} />}
       {isVisible(content.capabilities) && <CapabilitiesSection data={content.capabilities} />}
       {isVisible(content.nowNext) && <NowNextSection data={content.nowNext} />}
       {isVisible(content.contact) && <ContactSection data={content.contact} />}

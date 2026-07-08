@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import {
-  Save, LogOut, ExternalLink, Loader2, LayoutDashboard,
-  Plus, Trash2, Star, Copy, Download, Upload, RotateCcw, Link2, Check, X, Pencil,
+  Save, LogOut, ExternalLink, Loader2, LayoutDashboard, Home,
+  Plus, Trash2, Star, Download, Upload, RotateCcw, Link2, Check, X, Pencil, Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
@@ -16,8 +16,9 @@ import {
   HeroEditor, CoreThesisEditor, CareerEvolutionEditor, ProjectsEditor,
   CapabilitiesEditor, NowNextEditor, ContactEditor,
 } from '../components/admin/SectionEditors';
+import ProjectDatabaseEditor from '../components/admin/ProjectDatabaseEditor';
 
-const TABS = [
+const EXTERNAL_TABS = [
   { key: 'hero', label: '主視覺' },
   { key: 'coreThesis', label: '核心主張' },
   { key: 'careerEvolution', label: '職涯地圖' },
@@ -26,6 +27,7 @@ const TABS = [
   { key: 'nowNext', label: '現在與下一步' },
   { key: 'contact', label: '聯絡區' },
 ];
+const DB_TABS = [{ key: 'projectDatabase', label: '所有專案' }];
 
 const AdminDashboard = () => {
   const { user, checking, logout } = useAuth();
@@ -45,7 +47,15 @@ const AdminDashboard = () => {
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
-  // Load profiles list + default profile content
+  // warn on unsaved changes
+  useEffect(() => {
+    const handler = (e) => {
+      if (dirty) { e.preventDefault(); e.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
+
   useEffect(() => {
     if (checking || !user) return;
     (async () => {
@@ -53,9 +63,7 @@ const AdminDashboard = () => {
         const list = await listProfiles();
         setProfiles(list);
         const def = list.find((p) => p.is_default) || list[0];
-        if (def) {
-          await loadProfile(def.slug, list);
-        }
+        if (def) await loadProfile(def.slug);
       } catch (err) {
         toast.error('無法載入設定檔');
       } finally {
@@ -65,7 +73,7 @@ const AdminDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checking, user]);
 
-  const loadProfile = async (slug, list = profiles) => {
+  const loadProfile = async (slug) => {
     try {
       const prof = await adminGetProfile(slug);
       setContent(prof.content);
@@ -79,23 +87,15 @@ const AdminDashboard = () => {
 
   if (!checking && !user) return <Navigate to="/admin/login" replace />;
 
-  const updateSection = (key, val) => {
-    setContent((prev) => ({ ...prev, [key]: val }));
-    setDirty(true);
-  };
-
-  const refreshProfiles = async () => {
-    const list = await listProfiles();
-    setProfiles(list);
-    return list;
-  };
+  const updateSection = (key, val) => { setContent((prev) => ({ ...prev, [key]: val })); setDirty(true); };
+  const refreshProfiles = async () => { const list = await listProfiles(); setProfiles(list); return list; };
 
   const handleSave = async () => {
     if (!activeSlug) return;
     setSaving(true);
     try {
       await updateProfileContent(activeSlug, content);
-      toast.success('內容已成功儲存！');
+      toast.success('內容已成功儲存！變更已套用到前台。');
       setDirty(false);
     } catch (err) {
       toast.error(formatApiErrorDetail(err.response?.data?.detail) || '儲存失敗');
@@ -106,7 +106,7 @@ const AdminDashboard = () => {
 
   const handleSwitchProfile = async (slug) => {
     if (slug === activeSlug) return;
-    if (dirty && !window.confirm('有未儲存的變更，切換設定檔將遺失。確定切換嗎？')) return;
+    if (dirty && !window.confirm('有未儲存的變更,切換設定檔將遺失。確定切換嗎？')) return;
     await loadProfile(slug);
   };
 
@@ -115,7 +115,7 @@ const AdminDashboard = () => {
     if (!name) return;
     try {
       const created = await createProfile({ name, source_slug: activeSlug });
-      toast.success(`已建立設定檔「${name}」`);
+      toast.success(`已建立設定檔「${name}」(複製自目前版本)`);
       await refreshProfiles();
       await loadProfile(created.slug);
     } catch (err) {
@@ -131,7 +131,7 @@ const AdminDashboard = () => {
       toast.success('設定檔已刪除');
       const list = await refreshProfiles();
       const def = list.find((p) => p.is_default) || list[0];
-      if (def) await loadProfile(def.slug, list);
+      if (def) await loadProfile(def.slug);
     } catch (err) {
       toast.error(formatApiErrorDetail(err.response?.data?.detail) || '刪除失敗');
     }
@@ -149,19 +149,14 @@ const AdminDashboard = () => {
     }
   };
 
-  const startRename = () => {
-    setRenameName(activeMeta?.name || '');
-    setRenameSlug(activeMeta?.slug || '');
-    setRenaming(true);
-  };
-
+  const startRename = () => { setRenameName(activeMeta?.name || ''); setRenameSlug(activeMeta?.slug || ''); setRenaming(true); };
   const handleRename = async () => {
     try {
       const res = await updateProfileMeta(activeSlug, { name: renameName, slug: renameSlug });
       toast.success('設定檔已更新');
       setRenaming(false);
-      const list = await refreshProfiles();
-      await loadProfile(res.slug || activeSlug, list);
+      await refreshProfiles();
+      await loadProfile(res.slug || activeSlug);
     } catch (err) {
       toast.error(formatApiErrorDetail(err.response?.data?.detail) || '更新失敗');
     }
@@ -185,12 +180,10 @@ const AdminDashboard = () => {
     reader.onload = (ev) => {
       try {
         const parsed = JSON.parse(ev.target.result);
-        if (!parsed.hero || !parsed.careerEvolution) {
-          throw new Error('JSON 格式不正確');
-        }
+        if (!parsed.hero || !parsed.careerEvolution) throw new Error('JSON 格式不正確');
         setContent(parsed);
         setDirty(true);
-        toast.success('JSON 已載入，請記得按儲存以套用');
+        toast.success('JSON 已載入,請記得按儲存以套用');
       } catch (err) {
         toast.error('無法解析 JSON 檔案：' + err.message);
       }
@@ -214,22 +207,17 @@ const AdminDashboard = () => {
 
   const publicPath = activeMeta?.is_default ? '/' : `/p/${activeSlug}`;
   const publicUrl = `${backendUrl}${publicPath}`;
-
-  const copyUrl = () => {
-    navigator.clipboard.writeText(publicUrl);
-    toast.success('已複製對外網址');
-  };
+  const copyUrl = () => { navigator.clipboard.writeText(publicUrl); toast.success('已複製對外網址'); };
 
   if (checking || loading || !content) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-cyan-400 animate-spin" />
-      </div>
-    );
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="w-10 h-10 text-cyan-400 animate-spin" /></div>;
   }
 
   const renderEditor = () => {
-    const props = { data: content[activeTab], update: (val) => updateSection(activeTab, val) };
+    if (activeTab === 'projectDatabase') {
+      return <ProjectDatabaseEditor data={content.projectDatabase || []} update={(val) => updateSection('projectDatabase', val)} />;
+    }
+    const props = { data: content[activeTab], update: (val) => updateSection(activeTab, val), content };
     switch (activeTab) {
       case 'hero': return <HeroEditor {...props} />;
       case 'coreThesis': return <CoreThesisEditor {...props} />;
@@ -241,6 +229,20 @@ const AdminDashboard = () => {
       default: return null;
     }
   };
+
+  const TabButton = ({ tab }) => (
+    <button
+      onClick={() => setActiveTab(tab.key)}
+      data-testid={`tab-${tab.key}`}
+      className={`px-4 py-3 rounded-xl text-left whitespace-nowrap transition-all duration-300 font-medium text-sm ${
+        activeTab === tab.key
+          ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/30 text-cyan-300 border border-cyan-400/40'
+          : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border border-transparent'
+      }`}
+    >
+      {tab.label}
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-slate-950" data-testid="admin-dashboard">
@@ -257,20 +259,10 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button
-              variant="outline"
-              onClick={() => window.open(publicPath, '_blank')}
-              data-testid="view-site-button"
-              className="border-blue-500/30 text-cyan-300 hover:bg-blue-500/10 hidden sm:flex"
-            >
-              <ExternalLink className="w-4 h-4 mr-1" /> 預覽
+            <Button variant="outline" onClick={() => window.open(publicPath, '_blank')} data-testid="back-to-frontend-button" className="border-blue-500/30 text-cyan-300 hover:bg-blue-500/10 hidden sm:flex">
+              <Home className="w-4 h-4 mr-1" /> 回到前台
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              data-testid="save-button"
-              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white"
-            >
+            <Button onClick={handleSave} disabled={saving} data-testid="save-button" className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white">
               {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
               儲存{dirty ? ' *' : ''}
             </Button>
@@ -284,110 +276,66 @@ const AdminDashboard = () => {
       {/* Profile & Tools Bar */}
       <div className="bg-slate-900/50 border-b border-blue-500/10">
         <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
-          {/* 設定檔選擇 */}
           <div className="flex flex-wrap items-center gap-2" data-testid="profile-selector">
-            <span className="text-xs text-slate-400 mr-1">設定檔版本：</span>
+            <span className="text-xs text-slate-400 mr-1">設定檔版本 (各自獨立)：</span>
             {profiles.map((p) => (
-              <button
-                key={p.slug}
-                onClick={() => handleSwitchProfile(p.slug)}
-                data-testid={`profile-tab-${p.slug}`}
-                className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-200 flex items-center gap-1.5 ${
-                  p.slug === activeSlug
-                    ? 'bg-gradient-to-r from-blue-600/40 to-cyan-600/40 text-white border border-cyan-400/40'
-                    : 'bg-slate-800/50 text-slate-400 hover:text-white border border-transparent'
-                }`}
-              >
+              <button key={p.slug} onClick={() => handleSwitchProfile(p.slug)} data-testid={`profile-tab-${p.slug}`}
+                className={`px-3 py-1.5 rounded-lg text-sm transition-all duration-200 flex items-center gap-1.5 ${p.slug === activeSlug ? 'bg-gradient-to-r from-blue-600/40 to-cyan-600/40 text-white border border-cyan-400/40' : 'bg-slate-800/50 text-slate-400 hover:text-white border border-transparent'}`}>
                 {p.is_default && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />}
                 {p.name}
               </button>
             ))}
-            <button
-              onClick={handleCreateProfile}
-              data-testid="create-profile-button"
-              className="px-3 py-1.5 rounded-lg text-sm bg-blue-600/20 hover:bg-blue-600/40 text-cyan-300 border border-blue-500/30 flex items-center gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" /> 新增版本
+            <button onClick={handleCreateProfile} data-testid="create-profile-button" className="px-3 py-1.5 rounded-lg text-sm bg-blue-600/20 hover:bg-blue-600/40 text-cyan-300 border border-blue-500/30 flex items-center gap-1">
+              <Copy className="w-3.5 h-3.5" /> 複製為新版本
             </button>
           </div>
 
-          {/* 目前設定檔操作 */}
           {renaming ? (
             <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-slate-800/50 border border-blue-500/20">
-              <Input value={renameName} onChange={(e) => setRenameName(e.target.value)} placeholder="設定檔名稱" data-testid="rename-name-input"
-                className="w-48 bg-slate-900/50 border-blue-500/30 text-white text-sm h-9" />
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-slate-500">網址代稱:</span>
-                <Input value={renameSlug} onChange={(e) => setRenameSlug(e.target.value)} placeholder="slug" data-testid="rename-slug-input"
-                  className="w-40 bg-slate-900/50 border-blue-500/30 text-white text-sm h-9" />
-              </div>
-              <Button size="sm" onClick={handleRename} data-testid="rename-save" className="bg-cyan-600 hover:bg-cyan-500 h-9">
-                <Check className="w-4 h-4" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setRenaming(false)} data-testid="rename-cancel" className="text-slate-400 h-9">
-                <X className="w-4 h-4" />
-              </Button>
+              <Input value={renameName} onChange={(e) => setRenameName(e.target.value)} placeholder="設定檔名稱" data-testid="rename-name-input" className="w-48 bg-slate-900/50 border-blue-500/30 text-white text-sm h-9" />
+              <div className="flex items-center gap-1"><span className="text-xs text-slate-500">網址代稱:</span>
+                <Input value={renameSlug} onChange={(e) => setRenameSlug(e.target.value)} placeholder="slug" data-testid="rename-slug-input" className="w-40 bg-slate-900/50 border-blue-500/30 text-white text-sm h-9" /></div>
+              <Button size="sm" onClick={handleRename} data-testid="rename-save" className="bg-cyan-600 hover:bg-cyan-500 h-9"><Check className="w-4 h-4" /></Button>
+              <Button size="sm" variant="ghost" onClick={() => setRenaming(false)} data-testid="rename-cancel" className="text-slate-400 h-9"><X className="w-4 h-4" /></Button>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              {/* 對外網址 */}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-blue-500/20">
                 <Link2 className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="text-xs text-slate-300 font-mono truncate max-w-[220px]" data-testid="profile-public-url">{publicUrl}</span>
                 <button onClick={copyUrl} data-testid="copy-url-button" className="text-slate-400 hover:text-cyan-300"><Copy className="w-3.5 h-3.5" /></button>
               </div>
-              <Button size="sm" variant="outline" onClick={startRename} data-testid="rename-profile-button" className="border-blue-500/30 text-slate-300 hover:bg-blue-500/10 h-8">
-                <Pencil className="w-3.5 h-3.5 mr-1" /> 重新命名
-              </Button>
-              {!activeMeta?.is_default && (
-                <Button size="sm" variant="outline" onClick={handleSetDefault} data-testid="set-default-button" className="border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10 h-8">
-                  <Star className="w-3.5 h-3.5 mr-1" /> 設為首頁
-                </Button>
-              )}
-              {profiles.length > 1 && (
-                <Button size="sm" variant="outline" onClick={handleDeleteProfile} data-testid="delete-profile-button" className="border-red-500/30 text-red-300 hover:bg-red-500/10 h-8">
-                  <Trash2 className="w-3.5 h-3.5 mr-1" /> 刪除
-                </Button>
-              )}
+              <Button size="sm" variant="outline" onClick={startRename} data-testid="rename-profile-button" className="border-blue-500/30 text-slate-300 hover:bg-blue-500/10 h-8"><Pencil className="w-3.5 h-3.5 mr-1" /> 重新命名</Button>
+              {!activeMeta?.is_default && <Button size="sm" variant="outline" onClick={handleSetDefault} data-testid="set-default-button" className="border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10 h-8"><Star className="w-3.5 h-3.5 mr-1" /> 設為首頁</Button>}
+              {profiles.length > 1 && <Button size="sm" variant="outline" onClick={handleDeleteProfile} data-testid="delete-profile-button" className="border-red-500/30 text-red-300 hover:bg-red-500/10 h-8"><Trash2 className="w-3.5 h-3.5 mr-1" /> 刪除</Button>}
               <div className="w-px h-6 bg-blue-500/20 mx-1" />
-              {/* Import / Export / Reset */}
               <input ref={importRef} type="file" accept="application/json" onChange={handleImport} className="hidden" data-testid="import-json-input" />
-              <Button size="sm" variant="outline" onClick={() => importRef.current?.click()} data-testid="import-button" className="border-blue-500/30 text-slate-300 hover:bg-blue-500/10 h-8">
-                <Upload className="w-3.5 h-3.5 mr-1" /> Import JSON
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleExport} data-testid="export-button" className="border-blue-500/30 text-slate-300 hover:bg-blue-500/10 h-8">
-                <Download className="w-3.5 h-3.5 mr-1" /> Export / 備份
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleReset} data-testid="reset-button" className="border-orange-500/30 text-orange-300 hover:bg-orange-500/10 h-8">
-                <RotateCcw className="w-3.5 h-3.5 mr-1" /> 重置示範
-              </Button>
+              <Button size="sm" variant="outline" onClick={() => importRef.current?.click()} data-testid="import-button" className="border-blue-500/30 text-slate-300 hover:bg-blue-500/10 h-8"><Upload className="w-3.5 h-3.5 mr-1" /> Import JSON</Button>
+              <Button size="sm" variant="outline" onClick={handleExport} data-testid="export-button" className="border-blue-500/30 text-slate-300 hover:bg-blue-500/10 h-8"><Download className="w-3.5 h-3.5 mr-1" /> Export / 備份</Button>
+              <Button size="sm" variant="outline" onClick={handleReset} data-testid="reset-button" className="border-orange-500/30 text-orange-300 hover:bg-orange-500/10 h-8"><RotateCcw className="w-3.5 h-3.5 mr-1" /> 重置示範</Button>
             </div>
           )}
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Tabs */}
-        <aside className="lg:w-56 flex-shrink-0">
-          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 lg:sticky lg:top-24" data-testid="admin-tabs">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                data-testid={`tab-${tab.key}`}
-                className={`px-4 py-3 rounded-xl text-left whitespace-nowrap transition-all duration-300 font-medium text-sm ${
-                  activeTab === tab.key
-                    ? 'bg-gradient-to-r from-blue-600/30 to-cyan-600/30 text-cyan-300 border border-cyan-400/40'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border border-transparent'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
+        <aside className="lg:w-60 flex-shrink-0">
+          <div className="lg:sticky lg:top-24 space-y-6" data-testid="admin-tabs">
+            <div>
+              <p className="text-[11px] uppercase tracking-widest text-slate-500 mb-2 px-1">A. 對外介面管理</p>
+              <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+                {EXTERNAL_TABS.map((tab) => <TabButton key={tab.key} tab={tab} />)}
+              </nav>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-widest text-slate-500 mb-2 px-1">B. 專案資料庫管理</p>
+              <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+                {DB_TABS.map((tab) => <TabButton key={tab.key} tab={tab} />)}
+              </nav>
+            </div>
+          </div>
         </aside>
 
-        {/* Editor Content */}
         <main className="flex-1 min-w-0" data-testid="editor-content">
           {renderEditor()}
         </main>

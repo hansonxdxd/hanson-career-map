@@ -9,7 +9,7 @@ const NowNextSection = ({ data }) => {
   });
 
   return (
-    <section ref={ref} className="py-32 bg-slate-900 relative overflow-hidden">
+    <section ref={ref} id="next" className="py-32 bg-slate-900 relative overflow-hidden">
       {/* 背景效果 */}
       <div className="absolute inset-0">
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-full blur-3xl" />

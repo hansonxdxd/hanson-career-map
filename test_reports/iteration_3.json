@@ -1,0 +1,43 @@
+{
+  "summary": "Iteration 3 (Project Database as source of truth + relation model + 3-surface UX + admin restructure) validated end-to-end. Backend: 34/34 pytest pass serially (5 new tests for projectDatabase/relations/slots/hero layout/capabilities + 2 new tests for profile independence). Frontend: Home TopNav + SectionDots + scroll-indicator present, no hero CTA buttons; stage project chips + view-archive nav work; Selected Projects resolved from DB with archive nav; /archive horizontal cards + expand + ?stage/?project highlighting + clear-filter work; Admin has two sidebar groups (A/B), 8 tabs incl tab-projectDatabase, back-to-frontend-button, projectDatabase CRUD + per-block toggles + links-add save & persist with toast; hero layout/shape/showimage controls all render; evolution-stage checkboxes, projects slot select+override, capabilities pool testids all present.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/profiles/{slug}", "issue": "Under pytest-xdist parallel run, cross-worker race conditions (TestProfileCRUD deleting TEST_ profiles while TestProfileIndependence is using one, and default-flag flips) cause 2 flaky failures. Runs serial ($ pytest -o addopts=): 34/34 PASS. Not a product bug but a test isolation concern — teardown_class in TestProfileCRUD blanket-deletes all TEST_/test- slug profiles. Consider using unique per-class name prefixes."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Home hero", "issues": ["When hero image is null (default demo), the hero section renders essentially blank on desktop viewport — only tagline/description visible far down; the empty right-side image slot leaves noticeable dead space until user scrolls. Consider showing text-only layout when showImage=true AND image=null, or auto-collapsing image column."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Improve hero rendering when showImage=true but image=null — currently produces empty right column.",
+    "(Optional) Harden PUT /api/profiles content validation — schema-validate projectDatabase items to prevent corruption via Import JSON."
+  ],
+  "critical_code_review_comments": [
+    "backfill_content in server.py mutates deeply on every GET/PUT read; consider a one-time migration on startup to avoid per-request cost as project counts grow.",
+    "db-add-project uses window.prompt which is not overridable via keyboard-driven design systems and blocks headless dialog automation predictably — consider a proper modal input; testing had to rely on page.once('dialog') which occasionally times out before the sync prompt fires.",
+    "ProjectDatabaseEditor: removing a project does NOT clean up references from careerEvolution.stages[].relatedProjectIds or projects.items[].projectId — resolveSlot must handle broken IDs (verified helper filters null, but stage chips may still list a dead id). Consider cascading cleanup on delete.",
+    "resolveSlot / getStageProjects rely on identity-by-id which is set to slug string in demo but stored fields id/slug are both slug — if user renames slug via Import JSON, existing references break silently.",
+    "SectionEditors.jsx has grown to 362 lines with many independent editors — consider splitting into per-section files for maintainability."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/iteration_3.json",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "success_rate": {"backend": "100% (34/34 serial)", "frontend": "100% of critical flows"},
+  "test_credentials": "hansonxdxd@gmail.com / Hanson2025! (verified working)",
+  "seed_data_creation": "During admin flow one auto-named '新專案' project was added and later removed via UI; main profile then reset via POST /api/profiles/main/reset. Verified final state: 5 demo projects with expected slugs (medical-literature, teaching-condense, enterprise-workflow, ai-content-pipeline, cross-domain-visual).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "backend_test.py adds TestProjectDatabaseModel and TestProfileIndependence. Run pytest serially (-o 'addopts=') when validating; default pytest.ini enables xdist which races on shared 'main' profile & TEST_ cleanup. Home stage chip testid = stage-{stageSlug}-project-{projectSlug} (NOT stage-systems-architect-5-... — that was a misleading example in the request; actual stage slugs: origin/resourceful/workflow/compression/enterprise-ai). Origin stage has no relatedProjectIds by design so no chips render there. Admin add-project prompt is via window.prompt — page.once('dialog', lambda d: d.accept('name')) is racy; prefer setting up the handler BEFORE the click via 'await page.expect_event(\"dialog\")' pattern. Archive card testid = archive-card-{projectSlug}; highlighted cards get opacity-100, dimmed get opacity-40 scale-[0.98].",
+  "rca of the issue": "N/A — no blocking issues found. Two flaky test failures in parallel run are due to test-suite race conditions (not a product bug). Serial run: 34/34 PASS."
+}

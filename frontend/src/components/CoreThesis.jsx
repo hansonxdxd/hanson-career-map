@@ -11,7 +11,7 @@ const CoreThesis = ({ data }) => {
   });
 
   return (
-    <section ref={ref} className="py-24 bg-slate-900 relative overflow-hidden">
+    <section ref={ref} id="thesis" className="py-24 bg-slate-900 relative overflow-hidden">
       {/* 背景裝飾 */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{

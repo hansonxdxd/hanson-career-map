@@ -325,3 +325,103 @@ class TestUpload:
                           files={"file": ("t.txt", io.BytesIO(b"hello"), "text/plain")},
                           headers=auth_headers)
         assert r.status_code == 400
+
+
+
+# ---------------- Iteration 3: Project DB / Relation Model ----------------
+class TestProjectDatabaseModel:
+    def test_content_has_project_database(self):
+        d = requests.get(f"{API}/content").json()
+        assert "projectDatabase" in d
+        pdb = d["projectDatabase"]
+        assert isinstance(pdb, list) and len(pdb) >= 5
+        required = {"id", "slug", "enabled", "order", "situation", "situationEnabled",
+                    "achievement", "learned", "results", "notes", "links", "tags",
+                    "title", "shortTitle", "period", "summary"}
+        for p in pdb:
+            assert required.issubset(set(p.keys())), f"Missing keys in {p.get('slug')}: {required - set(p.keys())}"
+        slugs = {p["slug"] for p in pdb}
+        assert {"medical-literature", "teaching-condense", "enterprise-workflow",
+                "ai-content-pipeline", "cross-domain-visual"}.issubset(slugs)
+
+    def test_stages_use_relation_model(self):
+        d = requests.get(f"{API}/content").json()
+        stages = d["careerEvolution"]["stages"]
+        assert len(stages) >= 5
+        for st in stages:
+            assert "relatedProjectIds" in st
+            assert "manualTags" in st
+            assert "removedAutoTags" in st
+            assert "slug" in st
+            # old fields must be gone
+            assert "situation" not in st
+            assert "actions" not in st
+
+    def test_projects_items_are_slots(self):
+        d = requests.get(f"{API}/content").json()
+        items = d["projects"]["items"]
+        for it in items:
+            assert "projectId" in it
+            assert "overrides" in it
+            assert "visible" in it
+
+    def test_hero_layout_shape_showimage(self):
+        d = requests.get(f"{API}/content").json()
+        assert d["hero"]["layout"] in ("left", "right", "center")
+        assert d["hero"]["shape"] in ("card", "rounded", "circle")
+        assert isinstance(d["hero"]["showImage"], bool)
+
+    def test_capabilities_categories_visible_description(self):
+        d = requests.get(f"{API}/content").json()
+        for c in d["capabilities"]["categories"]:
+            assert "visible" in c
+            assert "description" in c
+
+
+class TestProfileIndependence:
+    created_slug = None
+
+    @classmethod
+    def teardown_class(cls):
+        try:
+            r = requests.post(f"{API}/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
+            if r.status_code != 200:
+                return
+            hdr = {"Authorization": f"Bearer {r.json()['access_token']}"}
+            profiles = requests.get(f"{API}/profiles", headers=hdr).json()
+            for p in profiles:
+                if p["slug"] != DEFAULT_SLUG and (p["name"].startswith("TEST_") or p["slug"].startswith("test-")):
+                    requests.delete(f"{API}/profiles/{p['slug']}", headers=hdr)
+            requests.patch(f"{API}/profiles/{DEFAULT_SLUG}", json={"is_default": True}, headers=hdr)
+            requests.post(f"{API}/profiles/{DEFAULT_SLUG}/reset", headers=hdr)
+        except Exception:
+            pass
+
+    def test_1_create_from_main(self, auth_headers):
+        r = requests.post(f"{API}/profiles",
+                          json={"name": "TEST_ Independence", "source_slug": DEFAULT_SLUG},
+                          headers=auth_headers)
+        assert r.status_code == 200
+        TestProfileIndependence.created_slug = r.json()["slug"]
+
+    def test_2_edit_projectdb_does_not_leak(self, auth_headers):
+        slug = TestProfileIndependence.created_slug
+        assert slug
+        # Get target content
+        target = requests.get(f"{API}/admin/profiles/{slug}", headers=auth_headers).json()["content"]
+        # Modify projectDatabase[0].title
+        target["projectDatabase"][0]["title"] = "TEST_ Edited Title In Alt"
+        # Modify a stage's relatedProjectIds to only include one
+        first_pid = target["projectDatabase"][0]["id"]
+        target["careerEvolution"]["stages"][0]["relatedProjectIds"] = [first_pid]
+        r = requests.put(f"{API}/profiles/{slug}", json={"content": target}, headers=auth_headers)
+        assert r.status_code == 200
+
+        # main untouched
+        main_c = requests.get(f"{API}/profiles/{DEFAULT_SLUG}").json()["content"]
+        assert main_c["projectDatabase"][0]["title"] != "TEST_ Edited Title In Alt"
+
+        # alt persisted
+        alt_c = requests.get(f"{API}/profiles/{slug}").json()["content"]
+        assert alt_c["projectDatabase"][0]["title"] == "TEST_ Edited Title In Alt"
+        assert alt_c["careerEvolution"]["stages"][0]["relatedProjectIds"] == [first_pid]

@@ -4,7 +4,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 
 // Text input field
-export const TextField = ({ label, value, onChange, placeholder, testId }) => (
+export const TextField = ({ label, value, onChange, placeholder, testId, hint }) => (
   <div className="space-y-2">
     <Label className="text-slate-300">{label}</Label>
     <Input
@@ -14,11 +14,12 @@ export const TextField = ({ label, value, onChange, placeholder, testId }) => (
       data-testid={testId}
       className="bg-slate-900/50 border-blue-500/30 text-white placeholder:text-slate-500 focus:border-cyan-400"
     />
+    {hint && <p className="text-xs text-slate-500">{hint}</p>}
   </div>
 );
 
 // Textarea field
-export const TextAreaField = ({ label, value, onChange, placeholder, rows = 3, testId }) => (
+export const TextAreaField = ({ label, value, onChange, placeholder, rows = 3, testId, hint }) => (
   <div className="space-y-2">
     <Label className="text-slate-300">{label}</Label>
     <Textarea
@@ -29,6 +30,7 @@ export const TextAreaField = ({ label, value, onChange, placeholder, rows = 3, t
       data-testid={testId}
       className="bg-slate-900/50 border-blue-500/30 text-white placeholder:text-slate-500 focus:border-cyan-400 resize-y"
     />
+    {hint && <p className="text-xs text-slate-500">{hint}</p>}
   </div>
 );
 

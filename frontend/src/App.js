@@ -4,6 +4,7 @@ import './App.css';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from './components/ui/sonner';
 import LandingPage from './pages/LandingPage';
+import ArchivePage from './pages/ArchivePage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 
@@ -13,7 +14,9 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/archive" element={<ArchivePage />} />
           <Route path="/p/:slug" element={<LandingPage />} />
+          <Route path="/p/:slug/archive" element={<ArchivePage />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
