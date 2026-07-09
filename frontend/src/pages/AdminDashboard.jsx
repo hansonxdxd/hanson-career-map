@@ -162,15 +162,22 @@ const AdminDashboard = () => {
   };
 
   const handleExport = () => {
-    const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeSlug || 'content'}-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('已下載 JSON 備份');
-  };
+  const exportContent = JSON.parse(JSON.stringify(content));
+  if (exportContent.hero) exportContent.hero.image = '';
+  if (Array.isArray(exportContent.projectDatabase)) {
+    exportContent.projectDatabase.forEach((p) => {
+      if (p.image) p.image = '';
+    });
+  }
+  const blob = new Blob([JSON.stringify(exportContent, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${activeSlug || 'content'}-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success('已下載 JSON 備份（不含圖片）');
+};
 
   const handleImport = (e) => {
     const file = e.target.files?.[0];
