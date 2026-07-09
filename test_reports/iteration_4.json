@@ -1,0 +1,19 @@
+{
+  "summary": "Iteration 4 (S/A/O restored + Hero CTA removed + Archive emphasis) fully passes. Backend: 39/39 pytest tests green including 4 new tests for stage situation/actions/outcome (demo non-empty, backfill defaults missing keys to '', PUT persistence, main default preserves S/A/O). Frontend: Home career-map renders SITUATION/ACTIONS/OUTCOME labeled blocks + related project chips + view-archive button; hero shows no CTA buttons; Admin has S/A/O textareas that persist edits after save+reload; Admin Hero editor has NO hero-cta-* fields; Archive ?stage=enterprise-ai emphasizes medical-literature + enterprise-workflow with 已選取 badge (opacity 1) and dims others (opacity 0.32); archive-clear-filter returns to full list; Archive ?project=teaching-condense selects only that project; Archive no-params exhibits scroll-focus (unique opacities 0.32 and 1). Cleaned up TEST_ profiles + reset main to demo.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backfill added situation/actions/outcome defaults correctly (server.py:322-324).",
+    "DEFAULT_CONTENT.hero.ctas array still exists in server.py:148-152 but is no longer surfaced by frontend HeroEditor or Hero UI. Consider removing to avoid confusion/orphan data (low priority - harmless).",
+    "ArchivePage with viewport-tall pages will emphasize a card immediately due to useInView with rootMargin -42%; the spec's 'initially all cards normal' will be observed only when the viewport is much shorter than total list height. Behavior is correct for realistic viewports; noted for reference only."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (39/39)", "frontend": "100% (all 13 checks)"},
+  "test_credentials": "hansonxdxd@gmail.com / Hanson2025!",
+  "seed_data_creation": "None persisted; test profiles auto-cleaned via teardown_class + explicit cleanup curl; main profile reset to demo.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 3 iteration-4 changes verified: (1) S/A/O restored on stage model + shown on Home + editable in Admin; (2) Hero CTA fully removed from Admin + frontend; (3) Archive selection/scroll-focus emphasis with opacity 0.32 dim + cyan glow + 已選取 badge. Backend backfill correctly defaults missing S/A/O to empty string. If future iterations touch these areas, re-run backend_test.py + the archive Playwright checks in iteration_4."
+}

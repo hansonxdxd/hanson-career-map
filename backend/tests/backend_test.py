@@ -353,9 +353,19 @@ class TestProjectDatabaseModel:
             assert "manualTags" in st
             assert "removedAutoTags" in st
             assert "slug" in st
-            # old fields must be gone
-            assert "situation" not in st
-            assert "actions" not in st
+            # S/A/O added back per iteration 4
+            assert "situation" in st
+            assert "actions" in st
+            assert "outcome" in st
+
+    def test_stages_have_nonempty_sao_in_demo(self):
+        d = requests.get(f"{API}/content").json()
+        stages = d["careerEvolution"]["stages"]
+        # All 5 demo stages should have non-empty S/A/O
+        for st in stages:
+            assert st["situation"].strip(), f"empty situation in stage {st.get('slug')}"
+            assert st["actions"].strip(), f"empty actions in stage {st.get('slug')}"
+            assert st["outcome"].strip(), f"empty outcome in stage {st.get('slug')}"
 
     def test_projects_items_are_slots(self):
         d = requests.get(f"{API}/content").json()
@@ -425,3 +435,70 @@ class TestProfileIndependence:
         alt_c = requests.get(f"{API}/profiles/{slug}").json()["content"]
         assert alt_c["projectDatabase"][0]["title"] == "TEST_ Edited Title In Alt"
         assert alt_c["careerEvolution"]["stages"][0]["relatedProjectIds"] == [first_pid]
+
+
+# ---------------- Iteration 4: Situation/Actions/Outcome fields ----------------
+class TestStageSAOBackfillAndPersistence:
+    created_slug = None
+
+    @classmethod
+    def teardown_class(cls):
+        try:
+            r = requests.post(f"{API}/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
+            if r.status_code != 200:
+                return
+            hdr = {"Authorization": f"Bearer {r.json()['access_token']}"}
+            profiles = requests.get(f"{API}/profiles", headers=hdr).json()
+            for p in profiles:
+                if p["slug"] != DEFAULT_SLUG and (p["name"].startswith("TEST_") or p["slug"].startswith("test-")):
+                    requests.delete(f"{API}/profiles/{p['slug']}", headers=hdr)
+            requests.patch(f"{API}/profiles/{DEFAULT_SLUG}", json={"is_default": True}, headers=hdr)
+            requests.post(f"{API}/profiles/{DEFAULT_SLUG}/reset", headers=hdr)
+        except Exception:
+            pass
+
+    def test_1_create_test_profile(self, auth_headers):
+        r = requests.post(f"{API}/profiles",
+                          json={"name": "TEST_ SAO Backfill", "source_slug": DEFAULT_SLUG},
+                          headers=auth_headers)
+        assert r.status_code == 200
+        TestStageSAOBackfillAndPersistence.created_slug = r.json()["slug"]
+
+    def test_2_backfill_defaults_missing_sao_to_empty(self, auth_headers):
+        slug = TestStageSAOBackfillAndPersistence.created_slug
+        assert slug
+        # PUT content with a stage missing situation/actions/outcome keys entirely
+        content = requests.get(f"{API}/admin/profiles/{slug}", headers=auth_headers).json()["content"]
+        # Strip S/A/O from all stages
+        for st in content["careerEvolution"]["stages"]:
+            st.pop("situation", None)
+            st.pop("actions", None)
+            st.pop("outcome", None)
+        r = requests.put(f"{API}/profiles/{slug}", json={"content": content}, headers=auth_headers)
+        assert r.status_code == 200
+        # GET back, backfill must default them to ""
+        got = requests.get(f"{API}/profiles/{slug}").json()["content"]
+        for st in got["careerEvolution"]["stages"]:
+            assert "situation" in st and st["situation"] == ""
+            assert "actions" in st and st["actions"] == ""
+            assert "outcome" in st and st["outcome"] == ""
+
+    def test_3_put_persists_edited_sao(self, auth_headers):
+        slug = TestStageSAOBackfillAndPersistence.created_slug
+        content = requests.get(f"{API}/admin/profiles/{slug}", headers=auth_headers).json()["content"]
+        content["careerEvolution"]["stages"][0]["situation"] = "TEST_ situation edited"
+        content["careerEvolution"]["stages"][0]["actions"] = "TEST_ actions edited"
+        content["careerEvolution"]["stages"][0]["outcome"] = "TEST_ outcome edited"
+        r = requests.put(f"{API}/profiles/{slug}", json={"content": content}, headers=auth_headers)
+        assert r.status_code == 200
+        got = requests.get(f"{API}/profiles/{slug}").json()["content"]
+        s0 = got["careerEvolution"]["stages"][0]
+        assert s0["situation"] == "TEST_ situation edited"
+        assert s0["actions"] == "TEST_ actions edited"
+        assert s0["outcome"] == "TEST_ outcome edited"
+
+    def test_4_main_default_still_has_sao(self):
+        # main default demo content preserves S/A/O
+        d = requests.get(f"{API}/content").json()
+        s0 = d["careerEvolution"]["stages"][0]
+        assert s0["situation"] and s0["actions"] and s0["outcome"]

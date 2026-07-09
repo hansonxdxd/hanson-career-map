@@ -23,7 +23,6 @@ const Segmented = ({ label, value, options, onChange, testId }) => (
 // ---------------- Hero ----------------
 export const HeroEditor = ({ data, update }) => {
   const set = (key, val) => update({ ...data, [key]: val });
-  const setCta = (i, val) => { const ctas = [...data.ctas]; ctas[i] = { ...ctas[i], text: val }; update({ ...data, ctas }); };
   return (
     <div className="space-y-4">
       <VisibilityToggle value={data.visible} onChange={(v) => set('visible', v)} testId="hero-visible-toggle" />
@@ -44,11 +43,6 @@ export const HeroEditor = ({ data, update }) => {
         <TextField label="標語" value={data.tagline} onChange={(v) => set('tagline', v)} testId="hero-tagline" />
         <TextAreaField label="描述" value={data.description} onChange={(v) => set('description', v)} rows={3} testId="hero-description" />
         <TextField label="Scroll 提示文字" value={data.scrollHint} onChange={(v) => set('scrollHint', v)} testId="hero-scrollhint" hint="Hero 底部細緻向下箭頭旁的文字,例如 Scroll to explore" />
-      </EditorCard>
-      <EditorCard title="CTA 按鈕文字 (前台已弱化,主要導覽改用頂部選單與右側圓點)">
-        {data.ctas?.map((cta, i) => (
-          <TextField key={i} label={`按鈕 ${i + 1} (連結: ${cta.href})`} value={cta.text} onChange={(v) => setCta(i, v)} testId={`hero-cta-${i}`} />
-        ))}
       </EditorCard>
     </div>
   );
@@ -131,6 +125,9 @@ export const CareerEvolutionEditor = ({ data, update, content }) => {
             </div>
             <TextField label="英文副標" value={stage.titleEn} onChange={(v) => setStage(i, { titleEn: v })} testId={`evolution-stage-${i}-titleen`} />
             <TextAreaField label="階段摘要" value={stage.summary} onChange={(v) => setStage(i, { summary: v })} rows={2} testId={`evolution-stage-${i}-summary`} />
+            <TextAreaField label="Situation (遇到的問題)" value={stage.situation} onChange={(v) => setStage(i, { situation: v })} rows={2} testId={`evolution-stage-${i}-situation`} hint="留空則前台不顯示此段" />
+            <TextAreaField label="Actions (我的做法)" value={stage.actions} onChange={(v) => setStage(i, { actions: v })} rows={2} testId={`evolution-stage-${i}-actions`} hint="留空則前台不顯示此段" />
+            <TextAreaField label="Outcome (具體成果)" value={stage.outcome} onChange={(v) => setStage(i, { outcome: v })} rows={2} testId={`evolution-stage-${i}-outcome`} hint="留空則前台不顯示此段" />
 
             {/* 選取關聯專案 */}
             <div className="space-y-2">

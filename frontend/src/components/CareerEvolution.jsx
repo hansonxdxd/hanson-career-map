@@ -36,6 +36,28 @@ const StageCard = ({ stage, content, slug }) => {
             <p className="text-blue-300 text-lg mb-4 font-light">{stage.titleEn}</p>
             <p className="text-lg md:text-xl text-slate-200 mb-6 leading-relaxed">{stage.summary}</p>
 
+            {/* Situation / Actions / Outcome */}
+            <div className="space-y-4 mb-6">
+              {stage.situation && (
+                <div>
+                  <h4 className="text-cyan-400 font-semibold mb-1.5 text-xs uppercase tracking-wider">Situation</h4>
+                  <p className="text-slate-300 leading-relaxed">{stage.situation}</p>
+                </div>
+              )}
+              {stage.actions && (
+                <div>
+                  <h4 className="text-cyan-400 font-semibold mb-1.5 text-xs uppercase tracking-wider">Actions</h4>
+                  <p className="text-slate-300 leading-relaxed">{stage.actions}</p>
+                </div>
+              )}
+              {stage.outcome && (
+                <div>
+                  <h4 className="text-cyan-400 font-semibold mb-1.5 text-xs uppercase tracking-wider">Outcome</h4>
+                  <p className="text-slate-300 leading-relaxed">{stage.outcome}</p>
+                </div>
+              )}
+            </div>
+
             {/* 關聯專案短標題 chips */}
             {projects.length > 0 && (
               <div className="mb-5">

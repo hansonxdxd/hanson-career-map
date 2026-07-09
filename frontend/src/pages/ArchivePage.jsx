@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronDown, ExternalLink, FileText, Globe, Play, FileBox, Layers } from 'lucide-react';
+import { useInView } from 'react-intersection-observer';
+import { ArrowLeft, ChevronDown, ExternalLink, FileText, Globe, Play, FileBox, Layers, Sparkles } from 'lucide-react';
 import { getProfileBySlug, getContent } from '../lib/api';
 import { getProjectById, getProjectDatabase, homeBase } from '../lib/content';
 import { ImageFrame } from '../components/admin/ImageFramePicker';
@@ -18,23 +19,41 @@ const Block = ({ label, text, enabled }) => {
   );
 };
 
-const ProjectCard = ({ project, index, highlighted, dimmed, forwardRef }) => {
+const ProjectCard = ({ project, index, selected, emphasized, dimmed, onActive, forwardRef }) => {
   const [open, setOpen] = useState(false);
-  useEffect(() => { if (highlighted) setOpen(true); }, [highlighted]);
+  const { ref: inViewRef, inView } = useInView({ rootMargin: '-42% 0px -42% 0px', threshold: 0 });
+
+  useEffect(() => { if (selected) setOpen(true); }, [selected]);
+  useEffect(() => { if (inView) onActive(project.id); }, [inView, project.id, onActive]);
+
+  const setRefs = useCallback((node) => {
+    inViewRef(node);
+    if (forwardRef) forwardRef.current = node;
+  }, [inViewRef, forwardRef]);
 
   return (
     <motion.div
-      ref={forwardRef}
+      ref={setRefs}
       initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: Math.min(index * 0.05, 0.3) }}
+      animate={{
+        opacity: dimmed ? 0.32 : 1,
+        scale: emphasized ? 1.03 : (dimmed ? 0.96 : 1),
+        filter: dimmed ? 'blur(1px) saturate(0.6)' : 'blur(0px) saturate(1)',
+      }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
       data-testid={`archive-card-${project.slug}`}
-      className={`transition-all duration-500 ${dimmed ? 'opacity-40 scale-[0.98]' : 'opacity-100'}`}
+      className="transition-shadow"
     >
-      <div className={`rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-xl border transition-all duration-500 ${
-        highlighted ? 'border-cyan-400/70 shadow-[0_0_30px_rgba(34,211,238,0.25)]' : 'border-blue-500/25'
+      <div className={`relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-xl border transition-all duration-500 ${
+        selected
+          ? 'border-cyan-400/80 shadow-[0_0_40px_rgba(34,211,238,0.35)]'
+          : emphasized ? 'border-cyan-400/40 shadow-[0_0_24px_rgba(34,211,238,0.15)]' : 'border-blue-500/25'
       }`}>
+        {selected && (
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500 text-slate-950 text-xs font-bold shadow-lg">
+            <Sparkles className="w-3.5 h-3.5" /> 已選取
+          </div>
+        )}
         <div className="flex flex-col md:flex-row">
           {project.image && (
             <div className="md:w-2/5 flex-shrink-0">
@@ -60,27 +79,19 @@ const ProjectCard = ({ project, index, highlighted, dimmed, forwardRef }) => {
 
             <AnimatePresence initial={false}>
               {open && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="overflow-hidden"
-                >
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4 }} className="overflow-hidden">
                   <div className="pt-4 border-t border-blue-500/20">
                     <Block label="遇到什麼狀況" text={project.situation} enabled={project.situationEnabled} />
                     <Block label="具體達成什麼" text={project.achievement} enabled={project.achievementEnabled} />
                     <Block label="學到什麼" text={project.learned} enabled={project.learnedEnabled} />
                     <Block label="相關成果" text={project.results} enabled={project.resultsEnabled} />
                     <Block label="備註" text={project.notes} enabled={project.notesEnabled} />
-
                     {project.links?.filter((l) => l.url).length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-4">
                         {project.links.filter((l) => l.url).map((l, i) => {
                           const Ic = LINK_ICONS[l.type] || ExternalLink;
                           return (
-                            <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600/30 to-cyan-600/30 border border-cyan-400/30 text-cyan-200 text-sm hover:from-blue-600/50 hover:to-cyan-600/50 transition-all">
+                            <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600/30 to-cyan-600/30 border border-cyan-400/30 text-cyan-200 text-sm hover:from-blue-600/50 hover:to-cyan-600/50 transition-all">
                               <Ic className="w-3.5 h-3.5" /> {l.label || '連結'}
                             </a>
                           );
@@ -92,11 +103,7 @@ const ProjectCard = ({ project, index, highlighted, dimmed, forwardRef }) => {
               )}
             </AnimatePresence>
 
-            <button
-              onClick={() => setOpen((o) => !o)}
-              data-testid={`archive-toggle-${project.slug}`}
-              className="mt-4 inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
-            >
+            <button onClick={() => setOpen((o) => !o)} data-testid={`archive-toggle-${project.slug}`} className="mt-4 inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
               {open ? '收合' : '展開完整內容'}
               <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
             </button>
@@ -113,6 +120,7 @@ const ArchivePage = () => {
   const navigate = useNavigate();
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeId, setActiveId] = useState(null);
   const firstHighlightRef = useRef(null);
 
   const stageParam = params.get('stage');
@@ -130,7 +138,7 @@ const ArchivePage = () => {
     return getProjectDatabase(content).filter((p) => p.enabled !== false).sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [content]);
 
-  const highlightIds = useMemo(() => {
+  const selectedIds = useMemo(() => {
     if (!content) return null;
     if (projectParam) {
       const p = getProjectById(content, projectParam);
@@ -143,25 +151,24 @@ const ArchivePage = () => {
     return null;
   }, [content, stageParam, projectParam]);
 
+  const hasFilter = selectedIds && selectedIds.length > 0;
+
+  const onActive = useCallback((id) => setActiveId(id), []);
+
   useEffect(() => {
-    if (highlightIds && highlightIds.length && firstHighlightRef.current) {
-      setTimeout(() => firstHighlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 400);
+    if (hasFilter && firstHighlightRef.current) {
+      setTimeout(() => firstHighlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 450);
     }
-  }, [highlightIds, projects]);
+  }, [hasFilter, projects]);
 
   if (loading || !content) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="w-12 h-12 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
-      </div>
-    );
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="w-12 h-12 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" /></div>;
   }
 
   let firstAssigned = false;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-blue-950/40 to-slate-950" data-testid="archive-page">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-blue-500/15">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <button onClick={() => navigate(homeBase(slug))} data-testid="archive-back-home" className="inline-flex items-center gap-2 text-slate-300 hover:text-cyan-300 transition-colors">
@@ -175,21 +182,26 @@ const ArchivePage = () => {
         <motion.div className="mb-12" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">專案資料庫</h1>
           <p className="text-cyan-400 text-lg">Career Archive — {projects.length} projects</p>
-          {(stageParam || projectParam) && (
-            <button onClick={() => navigate(slug ? `/p/${slug}/archive` : '/archive')} data-testid="archive-clear-filter" className="mt-4 text-sm text-slate-400 hover:text-cyan-300 underline">
-              顯示全部專案
-            </button>
+          {hasFilter && (
+            <div className="mt-4 flex items-center gap-3 flex-wrap">
+              <span className="text-sm text-slate-300">正在聚焦 {selectedIds.length} 個相關專案</span>
+              <button onClick={() => navigate(slug ? `/p/${slug}/archive` : '/archive')} data-testid="archive-clear-filter" className="text-sm text-cyan-400 hover:text-cyan-300 underline">
+                顯示全部專案
+              </button>
+            </div>
           )}
         </motion.div>
 
-        <div className="space-y-8">
+        <div className="space-y-10">
           {projects.map((project, index) => {
-            const highlighted = highlightIds ? highlightIds.includes(project.id) : false;
-            const dimmed = highlightIds && highlightIds.length > 0 ? !highlighted : false;
+            const selected = hasFilter ? selectedIds.includes(project.id) : false;
+            const isActive = activeId === project.id;
+            const emphasized = selected || isActive;
+            const dimmed = !emphasized && (hasFilter || activeId !== null);
             let refProp = null;
-            if (highlighted && !firstAssigned) { refProp = firstHighlightRef; firstAssigned = true; }
+            if (selected && !firstAssigned) { refProp = firstHighlightRef; firstAssigned = true; }
             return (
-              <ProjectCard key={project.id} project={project} index={index} highlighted={highlighted} dimmed={dimmed} forwardRef={refProp} />
+              <ProjectCard key={project.id} project={project} index={index} selected={selected} emphasized={emphasized} dimmed={dimmed} onActive={onActive} forwardRef={refProp} />
             );
           })}
         </div>
