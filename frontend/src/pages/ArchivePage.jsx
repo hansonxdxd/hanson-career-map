@@ -178,7 +178,7 @@ const ArchivePage = () => {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-16">
+      <div className="max-w-6xl mx-auto px-6 pt-16 pb-[60vh]">
         <motion.div className="mb-12" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">專案資料庫</h1>
           <p className="text-cyan-400 text-lg">Career Archive — {projects.length} projects</p>
